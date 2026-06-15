@@ -1,0 +1,66 @@
+name: CI / Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  deploy:
+    name: Deploy
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Write personal wrangler config
+        env:
+          KV_NAMESPACE_ID: ${{ secrets.KV_NAMESPACE_ID }}
+          RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          MASTODON_INSTANCE: ${{ secrets.MASTODON_INSTANCE }}
+        run: |
+          cat > wrangler.personal.toml << EOF
+          name = "rss-to-social"
+          main = "src/index.ts"
+          compatibility_date = "2024-09-23"
+          compatibility_flags = ["nodejs_compat"]
+
+          [triggers]
+          crons = ["0 * * * *"]
+
+          [[kv_namespaces]]
+          binding = "SEEN_POSTS"
+          id = "$KV_NAMESPACE_ID"
+
+          [vars]
+          RSS_FEED_URL = "$RSS_FEED_URL"
+          BLUESKY_HANDLE = "$BLUESKY_HANDLE"
+          MASTODON_INSTANCE = "$MASTODON_INSTANCE"
+          EOF
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.personal.toml

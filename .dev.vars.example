@@ -1,0 +1,9 @@
+# Copy this file to .dev.vars and fill in your values.
+# .dev.vars is gitignored — never commit real credentials.
+
+RSS_FEED_URL=https://example.com/rss.xml
+BLUESKY_HANDLE=you.bsky.social
+BLUESKY_APP_PASSWORD=your-app-password
+MASTODON_INSTANCE=mastodon.social
+MASTODON_TOKEN=your-access-token
+DEVTO_API_KEY=your-api-key

@@ -1,0 +1,20 @@
+# Template config — deploys as-is via Workers Builds or wrangler deploy.
+# The SEEN_POSTS KV namespace binding is created and linked in the Cloudflare dashboard.
+# For local dev, copy wrangler.personal.toml.example → wrangler.personal.toml.
+
+name = "rss-to-social"
+main = "src/index.ts"
+compatibility_date = "2026-06-15"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+RSS_FEED_URL = ""
+BLUESKY_HANDLE = ""
+MASTODON_INSTANCE = ""
+
+[observability]
+enabled = true
+head_sampling_rate = 1

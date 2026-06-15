@@ -1,0 +1,24 @@
+# Copy this file to wrangler.personal.toml and fill in your values.
+# wrangler.personal.toml is gitignored — never commit it.
+
+name = "rss-to-social"
+main = "src/index.ts"
+compatibility_date = "2026-06-15"
+compatibility_flags = ["nodejs_compat"]
+
+[triggers]
+crons = ["0 * * * *"]
+
+[[kv_namespaces]]
+binding = "SEEN_POSTS"
+id = "YOUR_PRODUCTION_KV_NAMESPACE_ID"
+preview_id = "YOUR_PREVIEW_KV_NAMESPACE_ID"
+
+[vars]
+RSS_FEED_URL = "https://your-site.com/rss.xml"
+BLUESKY_HANDLE = "you.bsky.social"
+MASTODON_INSTANCE = "mastodon.social"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
