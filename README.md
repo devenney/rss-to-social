@@ -41,10 +41,10 @@ Cloudflare runs `npm ci` then `npx wrangler deploy` automatically. The worker de
 
 ### 3. Create a KV namespace
 
-1. Go to **Workers & Pages → KV → Create namespace**
+1. Go to **Storage & Databases → Workers KV → Create instance**
 2. Name it `rss-to-social-kv` (or any name you like)
 3. Go to your Worker → **Settings → Bindings → Add binding**
-4. Choose **KV Namespace**, set variable name to `SEEN_POSTS`, select the namespace you just created
+4. Choose **KV Namespace**, set variable name to `SEEN_POSTS`, select the instance you just created
 
 ### 4. Set environment variables
 
