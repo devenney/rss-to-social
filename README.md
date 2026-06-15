@@ -43,12 +43,12 @@ Cloudflare runs `npm ci` then `npx wrangler deploy` automatically. The worker de
 
 1. Go to **Storage & Databases → Workers KV → Create instance**
 2. Name it `rss-to-social-kv` (or any name you like)
-3. Go to your Worker → **Settings → Bindings → Add binding**
+3. Go to your Worker → **Bindings → Add binding**
 4. Choose **KV Namespace**, set variable name to `SEEN_POSTS`, select the instance you just created
 
 ### 4. Set environment variables
 
-In your Worker → **Settings → Variables and Secrets**:
+In your Worker → **Settings → Variables and Secrets** (or the **Variables** tab if shown at the top level):
 
 | Variable | Value |
 |---|---|
@@ -74,7 +74,7 @@ Push any commit to your fork (or use the **Trigger deploy** button in the dashbo
 
 The worker runs on the schedule in `wrangler.toml` (default: hourly). On its **first run** it auto-bootstraps: marks all posts currently in your feed as already-seen without publishing them. On the **second run** onwards, only new posts are syndicated.
 
-You can trigger a manual run at any time: **Workers → your worker → Triggers → Send Cron Event**.
+You can trigger a manual run at any time via the **Triggers** tab on your Worker.
 
 ---
 
