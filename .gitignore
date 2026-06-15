@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+wrangler.personal.toml
+worker-configuration.d.ts
+*.log
+*.tgz
+.DS_Store

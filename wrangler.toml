@@ -1,0 +1,18 @@
+# Structural config — never deploy from this file directly.
+# All deployment uses wrangler.personal.toml (gitignored).
+# Copy wrangler.personal.toml.example → wrangler.personal.toml to get started.
+
+name = "rss-to-social"
+main = "src/index.ts"
+compatibility_date = "2026-06-15"
+compatibility_flags = ["nodejs_compat"]
+
+workers_dev = false
+preview_urls = false
+
+[triggers]
+crons = ["0 * * * *"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
