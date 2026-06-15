@@ -11,7 +11,9 @@ interface RawItem {
 }
 
 export async function fetchFeed(url: string): Promise<RssItem[]> {
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'rss-to-social/1.0 (+https://github.com/devenney/rss-to-social)' },
+  });
   if (!res.ok) {
     throw new Error(`RSS fetch failed: ${res.status} ${res.statusText}`);
   }
