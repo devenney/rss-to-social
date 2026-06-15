@@ -6,9 +6,17 @@
 //   npm run bootstrap -- --from=2026-01-01  # backfill from a specific date
 
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const BOOTSTRAPPED_KEY = '_bootstrapped';
 const BINDING = 'SEEN_POSTS';
+
+function readRssFeedUrl(): string {
+  const toml = readFileSync('wrangler.personal.toml', 'utf-8');
+  const match = toml.match(/RSS_FEED_URL\s*=\s*"([^"]+)"/);
+  if (!match?.[1]) throw new Error('RSS_FEED_URL not found in wrangler.personal.toml');
+  return match[1];
+}
 
 function main(): void {
   const fromArg = process.argv.find((a) => a.startsWith('--from='));
@@ -20,6 +28,9 @@ function main(): void {
       process.exit(1);
     }
   }
+
+  // Validate wrangler.personal.toml is configured before proceeding
+  readRssFeedUrl();
 
   const syncFrom = fromArg
     ? new Date(fromArg.slice('--from='.length)).toISOString()

@@ -13,8 +13,8 @@
     "typecheck": "tsc --noEmit && tsc --project tsconfig.scripts.json --noEmit",
     "setup": "tsx scripts/setup.ts",
     "secrets": "wrangler secret put BLUESKY_APP_PASSWORD --config wrangler.personal.toml && wrangler secret put MASTODON_TOKEN --config wrangler.personal.toml",
-    "bootstrap": "tsx --env-file=.dev.vars scripts/bootstrap.ts",
-    "nudge": "tsx --env-file=.dev.vars scripts/nudge.ts",
+    "bootstrap": "tsx scripts/bootstrap.ts",
+    "nudge": "tsx scripts/nudge.ts",
     "postinstall": "wrangler types --config wrangler.toml --no-strict-vars"
   },
   "dependencies": {

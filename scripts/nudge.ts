@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { XMLParser } from 'fast-xml-parser';
 
 const SEEN_PREFIX = 'seen:';
@@ -8,6 +9,13 @@ interface RawItem {
   guid?: string | { '#text': string };
   link?: string;
   title?: string;
+}
+
+function readRssFeedUrl(): string {
+  const toml = readFileSync('wrangler.personal.toml', 'utf-8');
+  const match = toml.match(/RSS_FEED_URL\s*=\s*"([^"]+)"/);
+  if (!match?.[1]) throw new Error('RSS_FEED_URL not found in wrangler.personal.toml');
+  return match[1];
 }
 
 async function main(): Promise<void> {
@@ -20,14 +28,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const feedUrl = process.env['RSS_FEED_URL'];
-  if (!feedUrl) {
-    console.error(
-      'Error: RSS_FEED_URL is not set.\n' +
-        'Copy .dev.vars.example → .dev.vars and fill in your values.',
-    );
-    process.exit(1);
-  }
+  const feedUrl = readRssFeedUrl();
 
   const res = await fetch(feedUrl);
   if (!res.ok) throw new Error(`Failed to fetch feed: ${res.status} ${res.statusText}`);

@@ -65,6 +65,7 @@ Prompts for `BLUESKY_APP_PASSWORD` then `MASTODON_TOKEN`. Secrets are stored in 
 
 ### 6. Deploy
 
+
 ```bash
 npm run deploy
 ```
