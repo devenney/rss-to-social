@@ -1,6 +1,6 @@
 {
   "name": "rss-to-social",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Automatically syndicate your RSS feed to Bluesky, Mastodon, and Dev.to. Runs on Cloudflare Workers.",
   "type": "module",
   "license": "MIT",
