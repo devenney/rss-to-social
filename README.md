@@ -17,39 +17,63 @@ Automatically syndicate your RSS feed to **Bluesky** and **Mastodon**. Runs on C
 ## Prerequisites
 
 - [Cloudflare account](https://cloudflare.com) (free tier sufficient)
-- Node.js 22+ (only needed if deploying manually via CLI)
 
 ---
 
-## Deploying via Cloudflare dashboard (recommended)
+## Deployment options
 
-No local setup required. Everything is configured in the Cloudflare dashboard.
+| Method | Requires | Best for |
+|---|---|---|
+| [Workers Builds](#deploying-via-workers-builds) | GitHub account, Cloudflare account | Dashboard-first, no local tooling |
+| [Wrangler CLI](#deploying-via-wrangler-cli) | Node.js 22+, Wrangler CLI | Local control, CI/CD pipelines |
 
-### 1. Fork this repository
+---
 
-Fork on GitHub so you own a copy.
+## Deploying via Workers Builds
 
-### 2. Connect to Workers Builds
+Cloudflare automatically deploys on every push to your default branch. All configuration lives in the Cloudflare dashboard.
 
-In the [Cloudflare dashboard](https://dash.cloudflare.com):
+### Important: how configuration works
 
-1. Go to **Workers & Pages → Create**
-2. Choose **Connect to Git**, select your fork
-3. Leave all build settings as defaults — no build command needed
-4. Click **Save and Deploy**
+`wrangler deploy` treats `wrangler.toml` as authoritative for the bindings it declares. This project uses `keep_vars = true` so that environment variables and secrets you set in the dashboard are preserved across deployments. **The KV namespace binding must be injected at build time** (see step 3) because dashboard-only bindings are cleared by each `wrangler deploy`.
 
-Cloudflare runs `npm ci` then `npx wrangler deploy` automatically. The worker deploys on every push to your default branch.
+### 1. Fork and connect
 
-### 3. Create a KV namespace
+1. Fork this repository on GitHub
+2. In the [Cloudflare dashboard](https://dash.cloudflare.com) go to **Workers & Pages → Create**
+3. Choose **Connect to Git** and select your fork
+4. Leave all build settings as defaults for now — you'll add a build command in step 3
+5. Click **Save and Deploy**
+
+### 2. Create a KV namespace
 
 1. Go to **Storage & Databases → Workers KV → Create instance**
-2. Name it `rss-to-social-kv` (or any name you like)
-3. Go to your Worker → **Bindings → Add binding**
-4. Choose **KV Namespace**, set variable name to `SEEN_POSTS`, select the instance you just created
+2. Name it `rss-to-social-kv` (any name is fine)
+3. Copy the namespace ID — you'll need it in the next step
+
+### 3. Configure the build command
+
+The KV namespace binding must be injected at build time so it survives every deployment.
+
+In Workers Builds → **Settings → Environment Variables**, add:
+
+| Variable | Value |
+|---|---|
+| `KV_NAMESPACE_ID` | The namespace ID from step 2 |
+
+Then in Workers Builds → **Settings → Build configuration**, set the **Build command** to:
+
+```bash
+printf '\n[[kv_namespaces]]\nbinding = "SEEN_POSTS"\nid = "%s"\n' "$KV_NAMESPACE_ID" >> wrangler.toml
+```
+
+This appends the KV binding to `wrangler.toml` before each deployment so the binding is never lost.
+
+Trigger a new deployment after saving — either push a commit or click **Trigger deploy**.
 
 ### 4. Set environment variables
 
-In your Worker → **Settings → Variables and Secrets** (or the **Variables** tab if shown at the top level):
+In your Worker → **Settings → Variables and Secrets**:
 
 | Variable | Value |
 |---|---|
@@ -57,7 +81,9 @@ In your Worker → **Settings → Variables and Secrets** (or the **Variables** 
 | `BLUESKY_HANDLE` | `you.bsky.social` |
 | `MASTODON_INSTANCE` | `mastodon.social` |
 
-### 5. Set secrets (encrypted)
+These are preserved across deployments by `keep_vars = true` in `wrangler.toml`.
+
+### 5. Set secrets
 
 In the same section, add as **Secret** (encrypted):
 
@@ -66,21 +92,17 @@ In the same section, add as **Secret** (encrypted):
 | `BLUESKY_APP_PASSWORD` | Settings → Privacy and Security → App Passwords ([bsky.app](https://bsky.app/settings/app-passwords)) |
 | `MASTODON_TOKEN` | Settings → Development → Your Applications → `write:statuses` scope ([mastodon.social](https://mastodon.social/settings/applications)) |
 
-### 6. Trigger a deploy
+### 6. Wait for the first cron tick
 
-Push any commit to your fork (or use the **Trigger deploy** button in the dashboard). The worker deploys automatically.
+The worker runs hourly by default. On its **first run** it auto-bootstraps: it records the current time as a sync floor and exits without publishing anything. On the **next run**, only posts published after that time are syndicated.
 
-### 7. Wait for the first cron tick
-
-The worker runs on the schedule in `wrangler.toml` (default: hourly). On its **first run** it auto-bootstraps: marks all posts currently in your feed as already-seen without publishing them. On the **second run** onwards, only new posts are syndicated.
-
-You can trigger a manual run at any time via the **Triggers** tab on your Worker.
+Trigger a manual run any time via the **Triggers** tab on your Worker.
 
 ---
 
-## Deploying via CLI (alternative)
+## Deploying via Wrangler CLI
 
-Use this if you want to run tests locally before deploying, or need full control over the build pipeline.
+Full local control. Configuration lives in a gitignored `wrangler.personal.toml` so it never touches the repository.
 
 ### 1. Clone and install
 
@@ -97,13 +119,15 @@ wrangler kv namespace create SEEN_POSTS
 wrangler kv namespace create SEEN_POSTS --preview
 ```
 
+Copy both IDs — you'll need them in the next step.
+
 ### 3. Create `wrangler.personal.toml`
 
 ```bash
 cp wrangler.personal.toml.example wrangler.personal.toml
 ```
 
-Fill in the KV namespace IDs from step 2, your RSS URL, social handles.
+Edit `wrangler.personal.toml` with your KV namespace IDs, RSS URL, and social handles. This file is gitignored and never committed.
 
 ### 4. Obtain credentials
 
@@ -117,13 +141,13 @@ wrangler secret put BLUESKY_APP_PASSWORD --config wrangler.personal.toml
 wrangler secret put MASTODON_TOKEN       --config wrangler.personal.toml
 ```
 
-### 6. Set up local `.dev.vars`
+### 6. Create `.dev.vars`
 
 ```bash
 cp .dev.vars.example .dev.vars
 ```
 
-Edit with your values (used by `npm run dev` and local testing).
+Fill in your values. This file is gitignored and is used by `npm run dev` and `npm run bootstrap`.
 
 ### 7. Deploy
 
@@ -131,17 +155,17 @@ Edit with your values (used by `npm run dev` and local testing).
 npm run deploy
 ```
 
-The worker auto-bootstraps on its first cron tick — no separate bootstrap step needed.
+The worker auto-bootstraps on its first cron tick.
 
 ---
 
 ## How auto-bootstrap works
 
-On its first run the worker records the current timestamp as a **sync floor**. Any post with a publication date before that timestamp is permanently skipped — protecting against back-catalogue flooding if the worker is deployed to a feed with existing posts.
+On its first run the worker records the current timestamp as a **sync floor**. Any post published before that time is permanently skipped — protecting against back-catalogue flooding on first deploy.
 
-After that, only posts published after the sync floor are syndicated. Seen GUIDs are tracked in KV to prevent duplicates within that window.
+After that, only posts published after the sync floor are syndicated. Seen GUIDs are tracked in KV to prevent duplicates.
 
-If the KV namespace is ever wiped, the sync floor resets to now on the next run. Posts between the original floor and the re-bootstrap will not be re-syndicated. To intentionally backfill from a specific date:
+If the KV namespace is ever wiped, the sync floor resets to now on the next run. To intentionally backfill from a specific date:
 
 ```bash
 npm run bootstrap -- --from=2026-01-01
@@ -157,26 +181,7 @@ If a post was skipped due to adapter downtime or a transient error:
 npm run nudge -- --url=https://your-site.com/blog/the-missed-post
 ```
 
-This removes the post's GUID from KV. The next cron tick re-syndicates it through all active adapters.
-
----
-
-## GitHub Actions CI/CD (optional)
-
-If you want lint → typecheck → test to run before every deploy, use GitHub Actions instead of (or in addition to) Workers Builds.
-
-Add these secrets to your GitHub repository (**Settings → Secrets and variables → Actions**):
-
-| Secret | Notes |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → "Edit Cloudflare Workers" template |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → any Workers page → right sidebar |
-| `KV_NAMESPACE_ID` | The production namespace ID from `wrangler kv namespace create` |
-| `RSS_FEED_URL` | Your feed URL |
-| `BLUESKY_HANDLE` | Your Bluesky handle |
-| `MASTODON_INSTANCE` | Your Mastodon instance hostname |
-
-Push to `main` to trigger CI and deploy. Releases are managed by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org/).
+This removes the post's GUID from KV. The next cron tick re-syndicates it.
 
 ---
 
@@ -184,7 +189,7 @@ Push to `main` to trigger CI and deploy. Releases are managed by [release-please
 
 ### Cron schedule
 
-Edit `wrangler.toml` (or your fork):
+Edit `wrangler.toml` (or your `wrangler.personal.toml`):
 
 ```toml
 [triggers]
