@@ -6,5 +6,4 @@ interface Env {
   SEEN_POSTS: KVNamespace;
   BLUESKY_APP_PASSWORD?: string;
   MASTODON_TOKEN?: string;
-  DEVTO_API_KEY?: string;
 }

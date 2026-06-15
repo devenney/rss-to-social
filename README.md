@@ -1,13 +1,14 @@
 # rss-to-social
 
-Automatically syndicate your RSS feed to **Bluesky**, **Mastodon**, and **Dev.to**. Runs on Cloudflare Workers as a scheduled cron job. Open source — bring your own feed and credentials.
+Automatically syndicate your RSS feed to **Bluesky** and **Mastodon**. Runs on Cloudflare Workers as a scheduled cron job. Open source — bring your own feed and credentials.
+
+> **Dev.to:** has native RSS import built in — no adapter needed. See [dev.to/settings/extensions](https://dev.to/settings/extensions) to connect your feed directly. Posts land as drafts for you to review before publishing.
 
 ## Features
 
 - Polls any RSS 2.0 feed on a configurable cron schedule
 - Posts to **Bluesky** with a rich link card (OG title, description, thumbnail via AT Protocol embed)
 - Posts to **Mastodon** with title, excerpt, and link (client-side preview generated automatically)
-- Cross-posts to **Dev.to** with full content and `canonical_url` pointing to your original post — SEO preserved
 - Deduplicates via Cloudflare KV — each post syndicates exactly once
 - Auto-bootstraps on first run: safe against back-catalogue flooding, no setup scripts required
 - Adapters are optional — configure only the platforms you want; others are silently skipped
@@ -58,13 +59,12 @@ In your Worker → **Settings → Variables and Secrets** (or the **Variables** 
 
 ### 5. Set secrets (encrypted)
 
-In the same Variables and Secrets section, add as **Secret** (encrypted):
+In the same section, add as **Secret** (encrypted):
 
 | Secret | How to get it |
 |---|---|
 | `BLUESKY_APP_PASSWORD` | Settings → Privacy and Security → App Passwords ([bsky.app](https://bsky.app/settings/app-passwords)) |
-| `MASTODON_TOKEN` | Settings → Development → Your Applications → write:statuses scope |
-| `DEVTO_API_KEY` | Settings → Extensions → DEV Community API Keys ([dev.to](https://dev.to/settings/extensions)) |
+| `MASTODON_TOKEN` | Settings → Development → Your Applications → `write:statuses` scope ([mastodon.social](https://mastodon.social/settings/applications)) |
 
 ### 6. Trigger a deploy
 
@@ -107,18 +107,14 @@ Fill in the KV namespace IDs from step 2, your RSS URL, social handles.
 
 ### 4. Obtain credentials
 
-See the platform-specific instructions:
-
 - **Bluesky:** [bsky.app/settings/app-passwords](https://bsky.app/settings/app-passwords) → Add App Password
 - **Mastodon:** `https://[instance]/settings/applications` → New Application, tick `write:statuses`
-- **Dev.to:** [dev.to/settings/extensions](https://dev.to/settings/extensions) → Generate API Key
 
 ### 5. Set secrets
 
 ```bash
 wrangler secret put BLUESKY_APP_PASSWORD --config wrangler.personal.toml
 wrangler secret put MASTODON_TOKEN       --config wrangler.personal.toml
-wrangler secret put DEVTO_API_KEY        --config wrangler.personal.toml
 ```
 
 ### 6. Set up local `.dev.vars`
@@ -145,7 +141,7 @@ On its first run the worker records the current timestamp as a **sync floor**. A
 
 After that, only posts published after the sync floor are syndicated. Seen GUIDs are tracked in KV to prevent duplicates within that window.
 
-If the KV namespace is ever wiped: the sync floor is re-set to now on the next run. Posts published between the original floor and the re-bootstrap will not be re-syndicated. To intentionally backfill a specific date range, use the bootstrap script:
+If the KV namespace is ever wiped, the sync floor resets to now on the next run. Posts between the original floor and the re-bootstrap will not be re-syndicated. To intentionally backfill from a specific date:
 
 ```bash
 npm run bootstrap -- --from=2026-01-01

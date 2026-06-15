@@ -6,4 +6,3 @@ BLUESKY_HANDLE=you.bsky.social
 BLUESKY_APP_PASSWORD=your-app-password
 MASTODON_INSTANCE=mastodon.social
 MASTODON_TOKEN=your-access-token
-DEVTO_API_KEY=your-api-key
