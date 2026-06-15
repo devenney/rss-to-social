@@ -17,109 +17,29 @@ Automatically syndicate your RSS feed to **Bluesky** and **Mastodon**. Runs on C
 ## Prerequisites
 
 - [Cloudflare account](https://cloudflare.com) (free tier sufficient)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed and authenticated (`wrangler login`)
+- Node.js 22+
 
 ---
 
-## Deployment options
-
-| Method | Requires | Best for |
-|---|---|---|
-| [Workers Builds](#deploying-via-workers-builds) | GitHub account, Cloudflare account | Dashboard-first, no local tooling |
-| [Wrangler CLI](#deploying-via-wrangler-cli) | Node.js 22+, Wrangler CLI | Local control, CI/CD pipelines |
-
----
-
-## Deploying via Workers Builds
-
-Cloudflare automatically deploys on every push to your default branch. All configuration lives in the Cloudflare dashboard.
-
-### Important: how configuration works
-
-`wrangler deploy` treats `wrangler.toml` as authoritative for the bindings it declares. This project uses `keep_vars = true` so that environment variables and secrets you set in the dashboard are preserved across deployments. **The KV namespace binding must be injected at build time** (see step 3) because dashboard-only bindings are cleared by each `wrangler deploy`.
-
-### 1. Fork and connect
-
-1. Fork this repository on GitHub
-2. In the [Cloudflare dashboard](https://dash.cloudflare.com) go to **Workers & Pages → Create**
-3. Choose **Connect to Git** and select your fork
-4. Leave all build settings as defaults for now — you'll add a build command in step 3
-5. Click **Save and Deploy**
-
-### 2. Create a KV namespace
-
-1. Go to **Storage & Databases → Workers KV → Create instance**
-2. Name it `rss-to-social-kv` (any name is fine)
-3. Copy the namespace ID — you'll need it in the next step
-
-### 3. Configure the build command
-
-The KV namespace binding must be injected at build time so it survives every deployment.
-
-In Workers Builds → **Settings → Environment Variables**, add:
-
-| Variable | Value |
-|---|---|
-| `KV_NAMESPACE_ID` | The namespace ID from step 2 |
-
-Then in Workers Builds → **Settings → Build configuration**, set the **Build command** to:
-
-```bash
-printf '\n[[kv_namespaces]]\nbinding = "SEEN_POSTS"\nid = "%s"\n' "$KV_NAMESPACE_ID" >> wrangler.toml
-```
-
-This appends the KV binding to `wrangler.toml` before each deployment so the binding is never lost.
-
-Trigger a new deployment after saving — either push a commit or click **Trigger deploy**.
-
-### 4. Set environment variables
-
-In your Worker → **Settings → Variables and Secrets**:
-
-| Variable | Value |
-|---|---|
-| `RSS_FEED_URL` | `https://your-site.com/rss.xml` |
-| `BLUESKY_HANDLE` | `you.bsky.social` |
-| `MASTODON_INSTANCE` | `mastodon.social` |
-
-These are preserved across deployments by `keep_vars = true` in `wrangler.toml`.
-
-### 5. Set secrets
-
-In the same section, add as **Secret** (encrypted):
-
-| Secret | How to get it |
-|---|---|
-| `BLUESKY_APP_PASSWORD` | Settings → Privacy and Security → App Passwords ([bsky.app](https://bsky.app/settings/app-passwords)) |
-| `MASTODON_TOKEN` | Settings → Development → Your Applications → `write:statuses` scope ([mastodon.social](https://mastodon.social/settings/applications)) |
-
-### 6. Wait for the first cron tick
-
-The worker runs hourly by default. On its **first run** it auto-bootstraps: it records the current time as a sync floor and exits without publishing anything. On the **next run**, only posts published after that time are syndicated.
-
-Trigger a manual run any time via the **Triggers** tab on your Worker.
-
----
-
-## Deploying via Wrangler CLI
-
-Full local control. Configuration lives in a gitignored `wrangler.personal.toml` so it never touches the repository.
+## Setup
 
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/rss-to-social.git
+git clone https://github.com/devenney/rss-to-social.git
 cd rss-to-social
 npm install
 ```
 
-### 2. Create KV namespaces
+### 2. Create a KV namespace
 
 ```bash
 wrangler kv namespace create SEEN_POSTS
 wrangler kv namespace create SEEN_POSTS --preview
 ```
 
-Copy both IDs — you'll need them in the next step.
+Copy both IDs from the output.
 
 ### 3. Create `wrangler.personal.toml`
 
@@ -127,7 +47,21 @@ Copy both IDs — you'll need them in the next step.
 cp wrangler.personal.toml.example wrangler.personal.toml
 ```
 
-Edit `wrangler.personal.toml` with your KV namespace IDs, RSS URL, and social handles. This file is gitignored and never committed.
+Edit `wrangler.personal.toml` with your values:
+
+```toml
+[[kv_namespaces]]
+binding = "SEEN_POSTS"
+id = "your-production-id"
+preview_id = "your-preview-id"
+
+[vars]
+RSS_FEED_URL = "https://your-site.com/rss.xml"
+BLUESKY_HANDLE = "you.bsky.social"
+MASTODON_INSTANCE = "mastodon.social"
+```
+
+This file is gitignored and never committed.
 
 ### 4. Obtain credentials
 
@@ -147,7 +81,7 @@ wrangler secret put MASTODON_TOKEN       --config wrangler.personal.toml
 cp .dev.vars.example .dev.vars
 ```
 
-Fill in your values. This file is gitignored and is used by `npm run dev` and `npm run bootstrap`.
+Fill in all values from steps 3–5.
 
 ### 7. Deploy
 
@@ -155,7 +89,7 @@ Fill in your values. This file is gitignored and is used by `npm run dev` and `n
 npm run deploy
 ```
 
-The worker auto-bootstraps on its first cron tick.
+The worker auto-bootstraps on its first cron tick — no manual setup needed.
 
 ---
 
@@ -185,11 +119,28 @@ This removes the post's GUID from KV. The next cron tick re-syndicates it.
 
 ---
 
+## Automatic deploys (optional)
+
+To deploy automatically on every push to `main`, add these secrets to your GitHub repository (**Settings → Secrets and variables → Actions**) and re-add the deploy job to `.github/workflows/ci-deploy.yml`:
+
+| Secret | Notes |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → "Edit Cloudflare Workers" template |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → any Workers page → right sidebar |
+| `KV_NAMESPACE_ID` | Your production KV namespace ID |
+| `RSS_FEED_URL` | Your feed URL |
+| `BLUESKY_HANDLE` | Your Bluesky handle |
+| `MASTODON_INSTANCE` | Your Mastodon instance |
+
+Releases and changelogs are managed automatically by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org/).
+
+---
+
 ## Configuration reference
 
 ### Cron schedule
 
-Edit `wrangler.toml` (or your `wrangler.personal.toml`):
+Edit `wrangler.personal.toml`:
 
 ```toml
 [triggers]
