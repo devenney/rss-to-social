@@ -21,7 +21,7 @@ export class BlueskyAdapter implements SocialAdapter {
   constructor(
     private readonly handle: string,
     private readonly appPassword: string,
-    private readonly fetcher: typeof fetch = fetch,
+    private readonly fetcher: typeof fetch = (...args: Parameters<typeof fetch>) => fetch(...args),
   ) {}
 
   async post(item: RssItem): Promise<string> {

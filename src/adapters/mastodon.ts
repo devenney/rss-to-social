@@ -7,7 +7,7 @@ export class MastodonAdapter implements SocialAdapter {
   constructor(
     private readonly instance: string,
     private readonly token: string,
-    private readonly fetcher: typeof fetch = fetch,
+    private readonly fetcher: typeof fetch = (...args: Parameters<typeof fetch>) => fetch(...args),
   ) {}
 
   async post(item: RssItem): Promise<string> {
