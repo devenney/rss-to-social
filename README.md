@@ -34,7 +34,7 @@ In the [Cloudflare dashboard](https://dash.cloudflare.com):
 
 1. Go to **Workers & Pages → Create**
 2. Choose **Connect to Git**, select your fork
-3. Set the build command to `npm run deploy` and the root directory to `/`
+3. Set the build command to `npm run deploy:cf` and the root directory to `/`
 4. Click **Save and Deploy**
 
 ### 3. Create a KV namespace
