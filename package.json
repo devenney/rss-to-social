@@ -15,7 +15,8 @@
     "secrets": "wrangler secret put BLUESKY_APP_PASSWORD --config wrangler.personal.toml && wrangler secret put MASTODON_TOKEN --config wrangler.personal.toml",
     "bootstrap": "tsx --env-file=.dev.vars scripts/bootstrap.ts",
     "nudge": "tsx --env-file=.dev.vars scripts/nudge.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "wrangler types --config wrangler.toml --no-strict-vars"
   },
   "dependencies": {
     "fast-xml-parser": "^5.8.0"
