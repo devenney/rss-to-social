@@ -1,13 +1,11 @@
-# Template config — deploys as-is via Workers Builds or wrangler deploy.
-# Vars and KV bindings are configured via Workers Builds environment variables
-# and the Cloudflare dashboard. See README for setup instructions.
-# For local dev, copy wrangler.personal.toml.example → wrangler.personal.toml.
+# Structural config — never deploy from this file directly.
+# All deployment uses wrangler.personal.toml (gitignored).
+# Copy wrangler.personal.toml.example → wrangler.personal.toml to get started.
 
 name = "rss-to-social"
 main = "src/index.ts"
 compatibility_date = "2026-06-15"
 compatibility_flags = ["nodejs_compat"]
-keep_vars = true
 
 workers_dev = false
 preview_urls = false
