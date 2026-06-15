@@ -32,36 +32,24 @@ cd rss-to-social
 npm install
 ```
 
-### 2. Create a KV namespace
+### 2. Run setup
 
 ```bash
-wrangler kv namespace create SEEN_POSTS
-wrangler kv namespace create SEEN_POSTS --preview
+npm run setup
 ```
 
-Copy both IDs from the output.
+This creates both KV namespaces and generates `wrangler.personal.toml` with the IDs already filled in. The file is gitignored and never committed.
 
-### 3. Create `wrangler.personal.toml`
+### 3. Fill in `wrangler.personal.toml`
 
-```bash
-cp wrangler.personal.toml.example wrangler.personal.toml
-```
-
-Edit `wrangler.personal.toml` with your values:
+Open the generated file and add your details:
 
 ```toml
-[[kv_namespaces]]
-binding = "SEEN_POSTS"
-id = "your-production-id"
-preview_id = "your-preview-id"
-
 [vars]
 RSS_FEED_URL = "https://your-site.com/rss.xml"
 BLUESKY_HANDLE = "you.bsky.social"
 MASTODON_INSTANCE = "mastodon.social"
 ```
-
-This file is gitignored and never committed.
 
 ### 4. Obtain credentials
 
