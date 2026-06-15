@@ -1,7 +1,5 @@
 # Copy this file to .dev.vars and fill in your values.
 # .dev.vars is gitignored — never commit real credentials.
-# Required for npm run bootstrap and npm run nudge.
+# Used by: npm run bootstrap, npm run nudge
 
 RSS_FEED_URL=https://your-site.com/rss.xml
-BLUESKY_APP_PASSWORD=your-app-password
-MASTODON_TOKEN=your-access-token
