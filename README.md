@@ -82,7 +82,6 @@ Seen post GUIDs are tracked in KV to prevent duplicates after the floor.
 If the KV namespace is ever wiped, the sync floor resets on the next run. To backfill from a specific date:
 
 ```bash
-cp .dev.vars.example .dev.vars  # fill in RSS_FEED_URL
 npm run bootstrap -- --from=2026-01-01
 ```
 
@@ -91,7 +90,6 @@ npm run bootstrap -- --from=2026-01-01
 ## Re-syndicating a missed post
 
 ```bash
-cp .dev.vars.example .dev.vars  # fill in RSS_FEED_URL if not already done
 npm run nudge -- --url=https://your-site.com/blog/the-missed-post
 ```
 
