@@ -1,5 +1,7 @@
 # rss-to-social
 
+![rss-to-social preview](docs/preview.svg)
+
 Automatically syndicate your RSS feed to **Bluesky** and **Mastodon**. Runs on Cloudflare Workers as a scheduled cron job. Open source — bring your own feed and credentials.
 
 > **Dev.to:** has native RSS import built in — no adapter needed. See [dev.to/settings/extensions](https://dev.to/settings/extensions) to connect your feed directly. Posts land as drafts for you to review before publishing.
@@ -107,18 +109,22 @@ This removes the post's GUID from KV. The next cron tick re-syndicates it.
 
 ---
 
-## Automatic deploys (optional)
+## Automatic deploys with GitHub Actions
 
-To deploy automatically on every push to `main`, add these secrets to your GitHub repository (**Settings → Secrets and variables → Actions**) and re-add the deploy job to `.github/workflows/ci-deploy.yml`:
+Every push to `main` runs CI (lint → typecheck → tests) then deploys to Cloudflare Workers automatically.
 
-| Secret | Notes |
+Add these secrets to your GitHub repository (**Settings → Secrets and variables → Actions**):
+
+| Secret | How to get it |
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare dashboard → My Profile → API Tokens → "Edit Cloudflare Workers" template |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare dashboard → any Workers page → right sidebar |
-| `KV_NAMESPACE_ID` | Your production KV namespace ID |
+| `KV_NAMESPACE_ID` | Your production KV namespace ID (from `npm run setup`) |
 | `RSS_FEED_URL` | Your feed URL |
 | `BLUESKY_HANDLE` | Your Bluesky handle |
-| `MASTODON_INSTANCE` | Your Mastodon instance |
+| `MASTODON_INSTANCE` | Your Mastodon instance hostname |
+
+The workflow generates `wrangler.personal.toml` from these secrets at deploy time — no personal config is ever committed to the repository.
 
 Releases and changelogs are managed automatically by [release-please](https://github.com/googleapis/release-please) from [conventional commits](https://www.conventionalcommits.org/).
 
