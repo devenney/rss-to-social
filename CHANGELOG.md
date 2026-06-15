@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.0](https://github.com/devenney/rss-to-social/compare/v0.3.0...v1.0.0) (2026-06-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* deployment now requires wrangler.personal.toml (run npm run setup). Workers Builds approach removed. GitHub Actions auto-deploy re-added.
+
+### Features
+
+* stable release — wrangler CLI deployment, auto-bootstrap, Bluesky + Mastodon ([d9ec75a](https://github.com/devenney/rss-to-social/commit/d9ec75a934b39fffa88e73da2c99d69812311f3d))
+
+
+### Bug Fixes
+
+* pass Cloudflare credentials as env vars rather than wrangler-action inputs ([2886e68](https://github.com/devenney/rss-to-social/commit/2886e68649acd102d1900441301bbfe210d5ad37))
+
 ## [0.3.0](https://github.com/devenney/rss-to-social/compare/v0.2.0...v0.3.0) (2026-06-15)
 
 
